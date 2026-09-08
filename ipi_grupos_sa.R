@@ -16,6 +16,7 @@ library(ggplot2)
 library(dplyr)
 library(readr)
 library(tidyr)
+source("md_helper.R")
 
 se <- read_csv("ipi-manufacturero-sectores.csv", show_col_types = FALSE) %>% arrange(indice_tiempo)
 ng <- read_csv("ipi-manufacturero.csv", show_col_types = FALSE) %>% arrange(indice_tiempo)
@@ -135,6 +136,7 @@ cap_sa_var <- paste0("Fuente: INDEC vía SSPM. Desest. indirecto X-13 por divisi
   "minerales no metálicos, metálicas básicas, metal, maquinaria, otros equipos, automotores, otro transporte, ",
   "muebles y otras).")
 
+tabs <- list(); punts <- list()
 for (v in c("v1", "v2")) {
   labs <- if (v == "v1") lab_v1 else lab_v2
   dlev <- gl %>% add_periods(v) %>%
@@ -153,15 +155,27 @@ for (v in c("v1", "v2")) {
   ggsave(fn1, p1, width = 12, height = 7, dpi = 300, bg = "white")
   message("Guardado ", fn1)
 
-  dreb <- dlev %>% group_by(grupo, periodo) %>% arrange(fecha) %>%
+  # Variación vs. nivel heredado (último mes de la presidencia anterior); Fernández cierra en nov-23
+  wins <- if (v == "v1") list(macri = c(as.Date("2016-01-01"), as.Date("2019-12-01")),
+                              alberto = c(as.Date("2019-12-01"), as.Date("2023-11-01")),
+                              milei = c(as.Date("2023-11-01"), max(dlev$fecha))) else
+                        list(macri = c(as.Date("2016-01-01"), as.Date("2019-11-01")),
+                              alberto = c(as.Date("2019-11-01"), as.Date("2023-11-01")),
+                              milei = c(as.Date("2023-11-01"), max(dlev$fecha)))
+  dreb <- bind_rows(lapply(names(wins), function(p)
+    dlev %>% filter(fecha >= wins[[p]][1], fecha <= wins[[p]][2]) %>%
+      arrange(fecha) %>% mutate(periodo = p))) %>%
+    mutate(periodo = factor(periodo, levels = names(period_colors))) %>%
+    group_by(grupo, periodo) %>% arrange(fecha) %>%
     mutate(mes_n = row_number() - 1L, base = first(indice_sa), var_pct = 100 * (indice_sa / base - 1)) %>% ungroup()
   p2 <- ggplot(dreb, aes(mes_n, var_pct, color = periodo, group = periodo)) +
     geom_hline(yintercept = 0, linetype = "dashed", color = "grey40") +
     geom_line(linewidth = 0.9) +
     facet_wrap(~grupo, scales = "free_y") +
     scale_color_manual(values = period_colors, labels = labs, name = "Presidencia", drop = TRUE) +
-    labs(title = paste0("IPI por grupo (desest. INDEC): % acumulado vs. primer mes [", v, "]"),
-         x = "Meses desde el primer mes del período", y = "% vs. primer mes (desest.)",
+    labs(title = paste0("IPI por grupo (desest. INDEC): % acumulado vs. nivel heredado [", v, "]"),
+         subtitle = "Base = último mes heredado; Fernández cierra en nov-23.",
+         x = "Meses desde el nivel heredado (mes 0)", y = "% vs. nivel heredado (desest.)",
          caption = cap_sa_var) +
     white_theme
   fn2 <- paste0("ipi_grupos_sa_variacion_", v, ".png")
@@ -171,8 +185,35 @@ for (v in c("v1", "v2")) {
   tab <- dlev %>% group_by(periodo, grupo) %>%
     summarise(n = n(), start = min(fecha), end = max(fecha), avg_sa = mean(indice_sa, na.rm = TRUE), .groups = "drop") %>%
     arrange(grupo, start)
-  fn3 <- paste0("ipi_grupos_promedio_sa_", v, ".csv")
-  write_csv(tab, fn3)
-  message("Guardado ", fn3)
-  print(as.data.frame(tab), digits = 5)
+  tabs[[v]] <- tab
+  punts[[v]] <- dreb %>% group_by(periodo, grupo) %>% arrange(fecha) %>%
+    summarise(Base = first(fecha), Cierre = last(fecha),
+              Nivel_heredado = first(indice_sa), Nivel_cierre = last(indice_sa),
+              Variación = 100 * (last(indice_sa) / first(indice_sa) - 1), .groups = "drop")
+  message("Tablas promedio + punta a punta ", v, " listas")
 }
+
+gov <- c(macri = "M. Macri", alberto = "A. Fernández", milei = "J. Milei")
+mkd_sa <- function(t) data.frame(Gobierno = gov[as.character(t$periodo)],
+  Grupo = as.character(t$grupo), Meses = t$n,
+  Período = paste0(es_fmt(t$start), " a ", es_fmt(t$end)),
+  Promedio = t$avg_sa, stringsAsFactors = FALSE)
+srcsa <- "Fuente: INDEC 453.1+453.2 vía SSPM. Desest. indirecto X-13 por división (spec INDEC 2025). Base 2004=100."
+write_md_table(mkd_sa(tabs$v1), c("Gobierno", "Grupo", "Meses", "Período", "Promedio"),
+  "Promedio", "Nivel promedio por gobierno y grupo, desestacionalizado (V1)", srcsa,
+  "tabla_promedio_grupos_sa.md", append = FALSE)
+write_md_table(mkd_sa(tabs$v2), c("Gobierno", "Grupo", "Meses", "Período", "Promedio"),
+  "Promedio", "Nivel promedio por gobierno y grupo, desestacionalizado (V2)", srcsa,
+  "tabla_promedio_grupos_sa.md", append = TRUE)
+
+mkp <- function(t) data.frame(Gobierno = gov[as.character(t$periodo)],
+  Grupo = as.character(t$grupo),
+  Rango = paste0(es_fmt(t$Base), " → ", es_fmt(t$Cierre)),
+  Variación = t$Variación, stringsAsFactors = FALSE)
+srcp <- "Fuente: INDEC vía SSPM, desest. INDEC. Variación punta a punta vs. último mes de la presidencia anterior (nivel heredado)."
+write_md_table(mkp(punts$v1), c("Gobierno", "Grupo", "Rango", "Variación"),
+  "Variación", "Diferencia punta a punta por gobierno y grupo (V1, % vs. nivel heredado)", srcp,
+  "tabla_punta_a_punta.md", append = FALSE)
+write_md_table(mkp(punts$v2), c("Gobierno", "Grupo", "Rango", "Variación"),
+  "Variación", "Diferencia punta a punta por gobierno y grupo (V2, % vs. nivel heredado)", srcp,
+  "tabla_punta_a_punta.md", append = TRUE)

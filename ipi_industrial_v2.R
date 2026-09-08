@@ -77,16 +77,18 @@ ggsave("ipi_nivel_2016_2026_v2.png", p1, width = 10, height = 6, dpi = 300, bg =
 message("Saved ipi_nivel_2016_2026_v2.png")
 
 # ---- Plot 2 v2: cumulative % change vs first month (December) of each presidency ----
-df_rebased <- df %>%
-  filter(!is.na(periodo)) %>%
-  group_by(periodo) %>%
-  arrange(fecha) %>%
-  mutate(
-    mes_n = row_number() - 1L,
-    base = first(serie_desestacionalizada),
-    var_pct = 100 * (serie_desestacionalizada / base - 1)
-  ) %>%
-  ungroup()
+# Ventanas v2 con base = último mes de la presidencia anterior (nivel heredado);
+# Macri sin antecesor en la muestra -> base ene-2016. Fernández cierra en nov-23.
+wins <- list(macri = c(as.Date("2016-01-01"), as.Date("2019-11-01")),
+             alberto = c(as.Date("2019-11-01"), as.Date("2023-11-01")),
+             milei = c(as.Date("2023-11-01"), max(df$fecha)))
+df_rebased <- bind_rows(lapply(names(wins), function(p)
+  df %>% filter(fecha >= wins[[p]][1], fecha <= wins[[p]][2]) %>%
+    arrange(fecha) %>%
+    mutate(periodo = p, mes_n = row_number() - 1L,
+           base = first(serie_desestacionalizada),
+           var_pct = 100 * (serie_desestacionalizada / base - 1)))) %>%
+  mutate(periodo = factor(periodo, levels = c("macri", "alberto", "milei")))
 
 print(df_rebased %>% group_by(periodo) %>% slice(1) %>%
         select(periodo, fecha, base) %>% as.data.frame())
@@ -97,10 +99,10 @@ p2 <- ggplot(df_rebased, aes(x = mes_n, y = var_pct, color = periodo, group = pe
   scale_color_manual(values = period_colors, labels = period_labels,
                      name = "Presidencia", drop = TRUE) +
   labs(
-    title = "IPI manufacturero: variación acumulada desde el primer mes de cada presidencia [v2]",
-    subtitle = "100*(índice desest. / índice en el mes 0 − 1). Mes 0 = ene-2016 (Macri), dic-2019 (Fernández), dic-2023 (Milei).",
-    x = "Meses desde el primer mes del período (comienzo en diciembre)",
-    y = "% de variación vs. primer mes (desest.)",
+    title = "IPI manufacturero: variación acumulada vs. el nivel heredado [v2]",
+    subtitle = "Nivel heredado: nov-19 (Fernández) y nov-23 (Milei). Fernández cierra en nov-23.",
+    x = "Meses desde el nivel heredado (mes 0)",
+    y = "% de variación vs. nivel heredado (desest.)",
     caption = "Fuente: INDEC (vía SSPM/datos.gob.ar). IPI desest., base 2004=100. Cortes v2 de transición de diciembre."
   ) +
   theme_minimal(base_size = 12) +

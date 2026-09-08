@@ -50,11 +50,19 @@ avg_table <- function(version) {
 t_v1 <- avg_table("v1")
 t_v2 <- avg_table("v2")
 
-cat("\n=== TABLE V1 (calendar years) — average IPI ===\n")
-print(as.data.frame(t_v1), digits = 6)
-cat("\n=== TABLE V2 (Dec-transition) — average IPI ===\n")
-print(as.data.frame(t_v2), digits = 6)
-
-write_csv(t_v1, "ipi_promedio_presidencia_v1.csv")
-write_csv(t_v2, "ipi_promedio_presidencia_v2.csv")
-message("Saved ipi_promedio_presidencia_v1.csv and ipi_promedio_presidencia_v2.csv")
+source("md_helper.R")
+mk_display <- function(t) data.frame(
+  Gobierno = as.character(t$presidency),
+  Meses = as.integer(t$n_months),
+  Período = paste0(es_fmt(t$start), " a ", es_fmt(t$end)),
+  Promedio_desest = t$avg_sa, Promedio_original = t$avg_original,
+  Tendencia_ciclo = t$avg_trend, stringsAsFactors = FALSE)
+src <- "Fuente: INDEC (vía SSPM/datos.gob.ar). IPI base 2004=100."
+write_md_table(mk_display(t_v1), c("Gobierno", "Meses", "Período", "Prom. desest.", "Prom. original", "Tendencia-ciclo"),
+  c("Promedio_desest", "Promedio_original", "Tendencia_ciclo"),
+  "Nivel promedio del IPI por presidencia (V1, años calendario)", src,
+  "tabla_promedio_nivel_general.md", append = FALSE)
+write_md_table(mk_display(t_v2), c("Gobierno", "Meses", "Período", "Prom. desest.", "Prom. original", "Tendencia-ciclo"),
+  c("Promedio_desest", "Promedio_original", "Tendencia_ciclo"),
+  "Nivel promedio del IPI por presidencia (V2, transición de diciembre)", src,
+  "tabla_promedio_nivel_general.md", append = TRUE)
