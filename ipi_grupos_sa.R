@@ -97,7 +97,7 @@ gl <- gsa %>%
                                       petro_quim_sa = "Petróleo + Químicos", resto_sa = "Resto"),
                         levels = c("Alimentos y bebidas", "Petróleo + Químicos", "Resto")))
 
-period_colors <- c(macri = "#C9A227", alberto = "#2E9D5B", milei = "#7B3FA0")
+period_colors <- c(macri = "#C9A227", alberto = "#1F5FA8", milei = "#7B3FA0")
 lab_v1 <- c(macri = "M. Macri (2016-2019)",
             alberto = "A. Fernández (2020-2023)", milei = "J. Milei (2024-2027)")
 lab_v2 <- c(macri = "M. Macri (dic-2015/nov-2019)", alberto = "A. Fernández (dic-2019/nov-2023)",
@@ -157,8 +157,8 @@ for (v in c("v1", "v2")) {
 
   # Variación vs. nivel heredado (último mes de la presidencia anterior); Fernández cierra en nov-23
   wins <- if (v == "v1") list(macri = c(as.Date("2016-01-01"), as.Date("2019-12-01")),
-                              alberto = c(as.Date("2019-12-01"), as.Date("2023-11-01")),
-                              milei = c(as.Date("2023-11-01"), max(dlev$fecha))) else
+                              alberto = c(as.Date("2019-12-01"), as.Date("2023-12-01")),
+                              milei = c(as.Date("2023-12-01"), max(dlev$fecha))) else
                         list(macri = c(as.Date("2016-01-01"), as.Date("2019-11-01")),
                               alberto = c(as.Date("2019-11-01"), as.Date("2023-11-01")),
                               milei = c(as.Date("2023-11-01"), max(dlev$fecha)))
@@ -174,7 +174,8 @@ for (v in c("v1", "v2")) {
     facet_wrap(~grupo, scales = "free_y") +
     scale_color_manual(values = period_colors, labels = labs, name = "Presidencia", drop = TRUE) +
     labs(title = paste0("IPI por grupo (desest. INDEC): % acumulado vs. nivel heredado [", v, "]"),
-         subtitle = "Base = último mes heredado; Fernández cierra en nov-23.",
+         subtitle = if (v == "v1") "Base = último mes heredado (dic-19 y dic-23)." else
+           "Base = último mes heredado (nov-19 y nov-23). Fernández cierra en nov-23.",
          x = "Meses desde el nivel heredado (mes 0)", y = "% vs. nivel heredado (desest.)",
          caption = cap_sa_var) +
     white_theme
@@ -194,26 +195,35 @@ for (v in c("v1", "v2")) {
 }
 
 gov <- c(macri = "M. Macri", alberto = "A. Fernández", milei = "J. Milei")
-mkd_sa <- function(t) data.frame(Gobierno = gov[as.character(t$periodo)],
-  Grupo = as.character(t$grupo), Meses = t$n,
-  Período = paste0(es_fmt(t$start), " a ", es_fmt(t$end)),
-  Promedio = t$avg_sa, stringsAsFactors = FALSE)
+grs <- c("Alimentos y bebidas", "Petróleo + Químicos", "Resto")
+govs <- c("macri", "alberto", "milei")
+wide_gr <- function(tab, valcol) {
+  mat <- sapply(govs, function(g) vapply(grs, function(gr) tab[[valcol]][tab$periodo == g & tab$grupo == gr][1], numeric(1)))
+  idx <- match(govs, tab$periodo)
+  list(mat = mat, starts = tab$start[idx], ends = tab$end[idx], ns = tab$n[idx])
+}
 srcsa <- "Fuente: INDEC 453.1+453.2 vía SSPM. Desest. indirecto X-13 por división (spec INDEC 2025). Base 2004=100."
-write_md_table(mkd_sa(tabs$v1), c("Gobierno", "Grupo", "Meses", "Período", "Promedio"),
-  "Promedio", "Nivel promedio por gobierno y grupo, desestacionalizado (V1)", srcsa,
+w1 <- wide_gr(tabs$v1, "avg_sa"); w2 <- wide_gr(tabs$v2, "avg_sa")
+gov_wide_md("Grupo", grs, w1$mat, w1$starts, w1$ends, w1$ns,
+  "Nivel promedio por gobierno y grupo, desestacionalizado (V1)", srcsa,
   "tabla_promedio_grupos_sa.md", append = FALSE)
-write_md_table(mkd_sa(tabs$v2), c("Gobierno", "Grupo", "Meses", "Período", "Promedio"),
-  "Promedio", "Nivel promedio por gobierno y grupo, desestacionalizado (V2)", srcsa,
+gov_wide_md("Grupo", grs, w2$mat, w2$starts, w2$ends, w2$ns,
+  "Nivel promedio por gobierno y grupo, desestacionalizado (V2)", srcsa,
   "tabla_promedio_grupos_sa.md", append = TRUE)
 
-mkp <- function(t) data.frame(Gobierno = gov[as.character(t$periodo)],
-  Grupo = as.character(t$grupo),
-  Rango = paste0(es_fmt(t$Base), " → ", es_fmt(t$Cierre)),
-  Variación = t$Variación, stringsAsFactors = FALSE)
+wide_punta <- function(tab) {
+  mat <- sapply(govs, function(g) vapply(grs, function(gr) tab$Variación[tab$periodo == g & tab$grupo == gr][1], numeric(1)))
+  idx <- match(govs, tab$periodo)
+  n_int <- mapply(function(b, e) (as.integer(format(e, "%Y")) - as.integer(format(b, "%Y"))) * 12L +
+    (as.integer(format(e, "%m")) - as.integer(format(b, "%m"))),
+    tab$Base[idx], tab$Cierre[idx])
+  list(mat = mat, starts = tab$Base[idx], ends = tab$Cierre[idx], ns = n_int)
+}
 srcp <- "Fuente: INDEC vía SSPM, desest. INDEC. Variación punta a punta vs. último mes de la presidencia anterior (nivel heredado)."
-write_md_table(mkp(punts$v1), c("Gobierno", "Grupo", "Rango", "Variación"),
-  "Variación", "Diferencia punta a punta por gobierno y grupo (V1, % vs. nivel heredado)", srcp,
-  "tabla_punta_a_punta.md", append = FALSE)
-write_md_table(mkp(punts$v2), c("Gobierno", "Grupo", "Rango", "Variación"),
-  "Variación", "Diferencia punta a punta por gobierno y grupo (V2, % vs. nivel heredado)", srcp,
-  "tabla_punta_a_punta.md", append = TRUE)
+p1 <- wide_punta(punts$v1); p2 <- wide_punta(punts$v2)
+gov_wide_md("Grupo", grs, p1$mat, p1$starts, p1$ends, p1$ns,
+  "Diferencia punta a punta por gobierno y grupo (V1, % vs. nivel heredado)", srcp,
+  "tabla_punta_a_punta.md", append = FALSE, suffix = "%", signed = TRUE)
+gov_wide_md("Grupo", grs, p2$mat, p2$starts, p2$ends, p2$ns,
+  "Diferencia punta a punta por gobierno y grupo (V2, % vs. nivel heredado)", srcp,
+  "tabla_punta_a_punta.md", append = TRUE, suffix = "%", signed = TRUE)

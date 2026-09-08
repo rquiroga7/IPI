@@ -51,18 +51,12 @@ t_v1 <- avg_table("v1")
 t_v2 <- avg_table("v2")
 
 source("md_helper.R")
-mk_display <- function(t) data.frame(
-  Gobierno = as.character(t$presidency),
-  Meses = as.integer(t$n_months),
-  Período = paste0(es_fmt(t$start), " a ", es_fmt(t$end)),
-  Promedio_desest = t$avg_sa, Promedio_original = t$avg_original,
-  Tendencia_ciclo = t$avg_trend, stringsAsFactors = FALSE)
+ng_mat <- function(t) rbind(t$avg_sa, t$avg_original, t$avg_trend)
+ng_rows <- c("Prom. desest.", "Prom. original", "Tendencia-ciclo")
 src <- "Fuente: INDEC (vía SSPM/datos.gob.ar). IPI base 2004=100."
-write_md_table(mk_display(t_v1), c("Gobierno", "Meses", "Período", "Prom. desest.", "Prom. original", "Tendencia-ciclo"),
-  c("Promedio_desest", "Promedio_original", "Tendencia_ciclo"),
+gov_wide_md("Métrica", ng_rows, ng_mat(t_v1), t_v1$start, t_v1$end, t_v1$n_months,
   "Nivel promedio del IPI por presidencia (V1, años calendario)", src,
   "tabla_promedio_nivel_general.md", append = FALSE)
-write_md_table(mk_display(t_v2), c("Gobierno", "Meses", "Período", "Prom. desest.", "Prom. original", "Tendencia-ciclo"),
-  c("Promedio_desest", "Promedio_original", "Tendencia_ciclo"),
+gov_wide_md("Métrica", ng_rows, ng_mat(t_v2), t_v2$start, t_v2$end, t_v2$n_months,
   "Nivel promedio del IPI por presidencia (V2, transición de diciembre)", src,
   "tabla_promedio_nivel_general.md", append = TRUE)

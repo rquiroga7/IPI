@@ -47,7 +47,7 @@ period_labels <- c(
 )
 period_colors <- c(
   macri    = "#C9A227",
-  alberto  = "#2E9D5B",
+  alberto  = "#1F5FA8",
   milei    = "#7B3FA0"
 )
 

@@ -52,7 +52,7 @@ gl <- g %>% select(-ng_original) %>%
                                       petro_quim = "Petróleo + Químicos", resto = "Resto"),
                         levels = c("Alimentos y bebidas", "Petróleo + Químicos", "Resto")))
 
-period_colors <- c(macri = "#C9A227", alberto = "#2E9D5B", milei = "#7B3FA0")
+period_colors <- c(macri = "#C9A227", alberto = "#1F5FA8", milei = "#7B3FA0")
 lab_v1 <- c(macri = "M. Macri (2016-2019)",
             alberto = "A. Fernández (2020-2023)", milei = "J. Milei (2024-2027)")
 lab_v2 <- c(macri = "M. Macri (dic-2015/nov-2019)", alberto = "A. Fernández (dic-2019/nov-2023)",
@@ -112,8 +112,8 @@ for (v in c("v1", "v2")) {
 
   # Variación vs. nivel heredado (último mes de la presidencia anterior); Fernández cierra en nov-23
   wins <- if (v == "v1") list(macri = c(as.Date("2016-01-01"), as.Date("2019-12-01")),
-                              alberto = c(as.Date("2019-12-01"), as.Date("2023-11-01")),
-                              milei = c(as.Date("2023-11-01"), max(dlev$fecha))) else
+                              alberto = c(as.Date("2019-12-01"), as.Date("2023-12-01")),
+                              milei = c(as.Date("2023-12-01"), max(dlev$fecha))) else
                         list(macri = c(as.Date("2016-01-01"), as.Date("2019-11-01")),
                               alberto = c(as.Date("2019-11-01"), as.Date("2023-11-01")),
                               milei = c(as.Date("2023-11-01"), max(dlev$fecha)))
@@ -129,7 +129,8 @@ for (v in c("v1", "v2")) {
     facet_wrap(~grupo, scales = "free_y") +
     scale_color_manual(values = period_colors, labels = labs, name = "Presidencia", drop = TRUE) +
     labs(title = paste0("IPI por grupo: % acumulado vs. nivel heredado [", v, "]"),
-         subtitle = "Base = último mes heredado; Fernández cierra en nov-23.",
+         subtitle = if (v == "v1") "Base = último mes heredado (dic-19 y dic-23)." else
+           "Base = último mes heredado (nov-19 y nov-23). Fernández cierra en nov-23.",
          x = "Meses desde el nivel heredado (mes 0)", y = "% vs. nivel heredado (original)",
          caption = cap_var) +
     white_theme
@@ -144,14 +145,19 @@ for (v in c("v1", "v2")) {
   message("Tabla promedio ", v, " lista")
 }
 
-mkd <- function(t) data.frame(Gobierno = c(macri = "M. Macri", alberto = "A. Fernández", milei = "J. Milei")[as.character(t$periodo)],
-  Grupo = as.character(t$grupo), Meses = t$n,
-  Período = paste0(es_fmt(t$start), " a ", es_fmt(t$end)),
-  Promedio = t$avg, stringsAsFactors = FALSE)
+mkd_wide <- function(tab) {
+  govs <- c("macri", "alberto", "milei")
+  grs <- c("Alimentos y bebidas", "Petróleo + Químicos", "Resto")
+  mat <- sapply(govs, function(g) vapply(grs, function(gr) tab$avg[tab$periodo == g & tab$grupo == gr][1], numeric(1)))
+  idx <- match(govs, tab$periodo)
+  list(mat = mat, starts = tab$start[idx], ends = tab$end[idx], ns = tab$n[idx])
+}
+w1 <- mkd_wide(tabs$v1); w2 <- mkd_wide(tabs$v2)
+grs <- c("Alimentos y bebidas", "Petróleo + Químicos", "Resto")
 srcg <- "Fuente: INDEC 453.1+453.2 vía SSPM. Serie original, base 2004=100."
-write_md_table(mkd(tabs$v1), c("Gobierno", "Grupo", "Meses", "Período", "Promedio"),
-  "Promedio", "Nivel promedio por gobierno y grupo, serie original (V1)", srcg,
+gov_wide_md("Grupo", grs, w1$mat, w1$starts, w1$ends, w1$ns,
+  "Nivel promedio por gobierno y grupo, serie original (V1)", srcg,
   "tabla_promedio_grupos.md", append = FALSE)
-write_md_table(mkd(tabs$v2), c("Gobierno", "Grupo", "Meses", "Período", "Promedio"),
-  "Promedio", "Nivel promedio por gobierno y grupo, serie original (V2)", srcg,
+gov_wide_md("Grupo", grs, w2$mat, w2$starts, w2$ends, w2$ns,
+  "Nivel promedio por gobierno y grupo, serie original (V2)", srcg,
   "tabla_promedio_grupos.md", append = TRUE)

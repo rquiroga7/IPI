@@ -53,7 +53,7 @@ period_labels <- c(
 )
 period_colors <- c(
   macri    = "#C9A227",  # dorado
-  alberto  = "#2E9D5B",  # verde
+  alberto  = "#1F5FA8",  # azul
   milei    = "#7B3FA0"   # violeta
 )
 
@@ -89,8 +89,8 @@ message("Saved ipi_nivel_2016_2026.png")
 # Ventanas con base = último mes de la presidencia anterior (nivel heredado);
 # Macri sin antecesor en la muestra -> base ene-2016. Fernández cierra en nov-23.
 wins <- list(macri = c(as.Date("2016-01-01"), as.Date("2019-12-01")),
-             alberto = c(as.Date("2019-12-01"), as.Date("2023-11-01")),
-             milei = c(as.Date("2023-11-01"), max(df$fecha)))
+             alberto = c(as.Date("2019-12-01"), as.Date("2023-12-01")),
+             milei = c(as.Date("2023-12-01"), max(df$fecha)))
 df_rebased <- bind_rows(lapply(names(wins), function(p)
   df %>% filter(fecha >= wins[[p]][1], fecha <= wins[[p]][2]) %>%
     arrange(fecha) %>%
@@ -110,7 +110,7 @@ p2 <- ggplot(df_rebased, aes(x = mes_n, y = var_pct, color = periodo, group = pe
                      name = "Presidencia", drop = TRUE) +
   labs(
     title = "IPI manufacturero: variación acumulada vs. el nivel heredado",
-    subtitle = "Nivel heredado: dic-19 (Fernández) y nov-23 (Milei). Fernández cierra en nov-23.",
+    subtitle = "Nivel heredado: dic-19 (Fernández) y dic-23 (Milei).",
     x = "Meses desde el nivel heredado (mes 0)",
     y = "% de variación vs. nivel heredado (desest.)",
     caption = "Fuente: INDEC (vía SSPM/datos.gob.ar). IPI desestacionalizado, base 2004=100."
