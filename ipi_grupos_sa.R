@@ -135,11 +135,12 @@ cap_sa_var <- paste0("Fuente: INDEC vía SSPM. Desest. indirecto X-13 por divisi
   "Resto = otras 13 divisiones (tabaco, textiles, vestimenta y calzado, madera y papel, caucho y plástico,\n",
   "minerales no metálicos, metálicas básicas, metal, maquinaria, otros equipos, automotores, otro transporte, ",
   "muebles y otras). Por Rodrigo Quiroga. Ver github.com/rquiroga7/IPI")
-cap_sa_var_sec <- paste0("Fuente: INDEC 453.1+453.2 vía SSPM. Desest. indirecto X-13 por división (spec INDEC 2025). Gris = las 16 divisiones\n",
-  "manufactureras (alimentos, tabaco, textiles, vestimenta y calzado, madera y papel, petróleo, químicos, caucho y plástico,\n",
-  "minerales no metálicos, metálicas básicas, metal, maquinaria, otros equipos, automotores y autopartes, otro transporte, muebles\n",
-  "y otras). Etiqueta según último valor: rojo <-5%, negro ±5%, verde >5%. Color intenso = nivel general indirecto (promedio\n",
-  "ponderado de las 16 divisiones SA, ponderadores INDEC 2004). Por Rodrigo Quiroga. Ver github.com/rquiroga7/IPI")
+cap_sa_var_sec <- paste0("Fuente: INDEC 453.1+453.2 vía SSPM. Desest. indirecto X-13 por división (spec INDEC 2025). ",
+  "Gris = las 16 divisiones manufactureras (alimentos, tabaco, textiles, vestimenta y calzado, madera y papel, petróleo, ",
+  "químicos, caucho y plástico, minerales no metálicos, metálicas básicas, metal, maquinaria, otros equipos, automotores y ",
+  "autopartes, otro transporte, muebles y otras). Etiqueta según último valor: rojo <-5%, negro ±5%, verde >5%. ",
+  "Color intenso = nivel general indirecto (promedio ponderado de las 16 divisiones SA, ponderadores INDEC 2004). ",
+  "Por Rodrigo Quiroga. Ver github.com/rquiroga7/IPI")
 
 # Nivel para la variante por sector: 16 divisiones SA + nivel general indirecto.
 SA_sec <- tibble(fecha = fechas) %>% dplyr::bind_cols(SA) %>%
@@ -176,7 +177,7 @@ for (v in c("v1", "v2")) {
     facet_wrap(~grupo, scales = "free_y") +
     scale_color_manual(values = period_colors, labels = labs, name = "Presidencia", drop = TRUE) +
     scale_x_date(date_breaks = "2 years", date_labels = "%Y") +
-    labs(title = paste0("IPI por grupo, desestacionalizado método INDEC (base 2004=100) [", v, "]"),
+    labs(title = paste0("Índice de producción industrial (IPI) por grupo"),
          subtitle = "Ajuste indirecto: X-13 por división (spec INDEC 2025) y agregación por ponderadores. Tramos desconectados.",
          x = NULL, y = "Índice (desest.)",
          caption = cap_sa_nivel) +
@@ -203,7 +204,7 @@ for (v in c("v1", "v2")) {
     geom_line(linewidth = 0.9) +
     facet_wrap(~grupo, scales = "free_y") +
     scale_color_manual(values = period_colors, labels = labs, name = "Presidencia", drop = TRUE) +
-    labs(title = paste0("IPI por grupo (desest. INDEC): % acumulado vs. nivel heredado [", v, "]"),
+    labs(title = paste0("Índice de producción industrial (IPI) por grupo (desest. INDEC): Variación acumulada"),
          subtitle = if (v == "v1") "Base = último mes heredado (dic-19 y dic-23)." else
            "Base = último mes heredado (nov-19 y nov-23). Fernández cierra en nov-23.",
          x = "Meses desde el nivel heredado (mes 0)", y = "% vs. nivel heredado (desest.)",
@@ -272,9 +273,9 @@ for (v in c("v1", "v2")) {
     scale_x_continuous(expand = expansion(mult = c(0.02, 0.30))) +
     scale_y_continuous(limits = c(-50, 75), oob = scales::oob_squish) +
     coord_cartesian(clip = "off") +
-    labs(title = "IPI por sector: % acumulado vs. nivel heredado",
+    labs(title = "Índice de producción industrial (IPI) por sector: Variación acumulada",
          x = "Meses desde el nivel heredado (mes 0)", y = "% vs. nivel heredado (desest.)",
-         caption = cap_sa_var_sec) +
+         caption = stringr::str_wrap(cap_sa_var_sec, width = 120)) +
     white_theme +
     theme(plot.margin = margin(5.5, 30, 5.5, 5.5), legend.position = "none")
   fn3 <- paste0("ipi_grupos_sa_variacion_sectores_", v, ".png")

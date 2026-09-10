@@ -61,7 +61,7 @@ p1 <- ggplot(df, aes(x = fecha, y = serie_desestacionalizada,
                      name = "Presidencia", drop = TRUE) +
   scale_x_date(date_breaks = "1 year", date_labels = "%Y", expand = c(0.01, 0.01)) +
   labs(
-    title = "Argentina: Índice de Producción Industrial manufacturero (IPI, INDEC) [v2]",
+    title = "Argentina: Índice de Producción Industrial manufacturero",
     subtitle = "Serie desest., base 2004=100. Cortes v2: cada mandato incluye su diciembre inicial y excluye su diciembre final.",
     x = NULL,
     y = "Índice (2004=100, desest.)",
