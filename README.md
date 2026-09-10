@@ -10,7 +10,7 @@ Este repo sigue la evolución de la industria manufacturera argentina (IPI del I
 - **Desestacionalizado propio (método indirecto INDEC):** en vez de ajustar el total directamente, se ajusta cada una de las 16 divisiones por separado con X-13ARIMA-SEATS usando las especificaciones que publicó INDEC en su nota metodológica 2025, y después se agregan con los ponderadores de 2004. La validación cierra: el nivel general reconstruido correlaciona 0,998 con el desestacionalizado oficial.
 - **Tres grupos:** Alimentos y bebidas (peso 24,46), Petróleo + Químicos (refinación 4,17 y químicos 12,71, ponderados) y Resto (las otras 13 divisiones, como residuo del promedio ponderado).
 - **Dos criterios de corte:** V1 por años calendario (2016–2019, 2020–2023, 2024–) y V2 con transición de diciembre (cada mandato incluye su diciembre inicial, reflejando las asunciones del 10 de diciembre).
-- **Comparación honesta:** cada presidencia se mide contra el *nivel heredado* (último mes del gobierno anterior, mes 0), no contra su propio arranque. Además hay un corte extra que divide la presidencia de Fernández en Guzmán (hasta jul-22) y Massa (desde jul-22).
+- Cada presidencia se mide contra el *nivel heredado* (último mes del gobierno anterior, mes 0), no contra su propio arranque. Además, para algunos análisis hacemos un corte extra que divide la presidencia de Fernández en Guzmán (hasta jul-22) y Massa (desde jul-22).
 
 ## Cómo se actualiza
 
@@ -27,21 +27,21 @@ Rscript run_all.R       # regenera CSVs, gráficos y tablas
 
 - **Macri (dorado):** arranca en ~135, pico a fines de 2017 (~138) y caída sostenida en 2018–2019 hasta ~115. Promedio desestacionalizado del mandato: **126,6**.
 - **Fernández (azul):** el pozo de la pandemia (piso ~78 en abr-20), rebote fuerte hasta 2022 (~137) y desgaste en 2023. Promedio: **124,0**.
-- **Milei (violeta):** caída inicial en 2024, rebote parcial y después amesetamiento con sesgo a la baja; el último dato (jul-26, 112 desest.) es de los más flojos de su mandato. Promedio parcial: **117,5** (ojo: lleva 32 meses contra 48 de los mandatos completos).
+- **Milei (violeta):** caída inicial en 2024, rebote parcial y después amesetamiento con sesgo a la baja; el último dato (jul-26, 112 desest.) es de los más flojos de su mandato. Promedio parcial: **117,5**
 
-### Los grupos cuentan otra historia: el "Resto" pone y saca presidentes
+### Variación por grupos
 
 ![IPI por grupo, variación vs nivel heredado v2](ipi_grupos_sa_variacion_v2.png)
 
-Fijate en el panel del Resto (las 13 divisiones que no son alimentos ni petróleo/químicos): se desploma **−20,2%** punta a punta con Macri, recupera **+10,4%** con Fernández y vuelve a caer **−19,3%** con Milei (a jul-26). En cambio Alimentos y bebidas y Petróleo + Químicos se mueven poco en los tres gobiernos (entre −7% y +8%). La industria que genera empleo manufacturero masivo es la más volátil políticamente.
+El panel del Resto (las 13 divisiones que no son alimentos ni petróleo/químicos): se desploma **−20,2%** punta a punta con Macri, recupera **+10,4%** con Fernández y vuelve a caer **−19,3%** con Milei (a jul-26). En cambio Alimentos y bebidas y Petróleo + Químicos se mueven menos en los tres gobiernos (entre −7% y +8%). La industria que genera empleo manufacturero masivo es la más volátil políticamente.
 
-### El Fernández partido en dos: Guzmán vs. Massa
+### El gobierno de Fernández partido en dos: Guzmán vs. Massa
 
 ![IPI por ministro v2](ipi_variacion_ministros_v2.png)
 
-Partiendo cada tramo de cero: el tramo Guzmán (nov-19–jul-22) termina del orden de **+19%**, motorizado por el rebote post-pandemia; el tramo Massa (jul-22–nov-23) termina alrededor de **−10%**. El promedio parejo de Fernández (+10,4% en el Resto) esconde dos etapas opuestas.
+Partiendo cada tramo de cero: el tramo Guzmán (nov-19–jul-22) termina del orden de **+19%**, motorizado por el rebote post-pandemia; el tramo Massa (jul-22–nov-23) termina alrededor de **−10%**. El promedio parejo de Fernández (+10,4% en el Resto) engloba dos etapas con resultado industrial opuestos.
 
-### La dispersión sectorial: no hay "la" industria, hay 16 industrias
+### La dispersión sectorial: no hay una industria, hay 16 industrias
 
 ![IPI por sector v2](ipi_grupos_sa_variacion_sectores_v2.png)
 
