@@ -65,7 +65,7 @@ p1 <- ggplot(df, aes(x = fecha, y = serie_desestacionalizada,
     subtitle = "Serie desest., base 2004=100. Cortes v2: cada mandato incluye su diciembre inicial y excluye su diciembre final.",
     x = NULL,
     y = "Índice (2004=100, desest.)",
-    caption = "Fuente: INDEC (vía SSPM/datos.gob.ar). Cortes v2 de transición de diciembre (ver leyenda)."
+    caption = "Fuente: INDEC (vía SSPM/datos.gob.ar). Cortes v2 de transición de diciembre (ver leyenda). Por Rodrigo Quiroga. Ver github.com/rquiroga7/IPI"
   ) +
   theme_minimal(base_size = 12) +
   theme(legend.position = "bottom", plot.caption = element_text(hjust = 0),
@@ -103,7 +103,7 @@ p2 <- ggplot(df_rebased, aes(x = mes_n, y = var_pct, color = periodo, group = pe
     subtitle = "Nivel heredado: nov-19 (Fernández) y nov-23 (Milei). Fernández cierra en nov-23.",
     x = "Meses desde el nivel heredado (mes 0)",
     y = "% de variación vs. nivel heredado (desest.)",
-    caption = "Fuente: INDEC (vía SSPM/datos.gob.ar). IPI desest., base 2004=100. Cortes v2 de transición de diciembre."
+    caption = "Fuente: INDEC (vía SSPM/datos.gob.ar). IPI desest., base 2004=100. Cortes v2 de transición de diciembre. Por Rodrigo Quiroga. Ver github.com/rquiroga7/IPI"
   ) +
   theme_minimal(base_size = 12) +
   theme(legend.position = "bottom", plot.caption = element_text(hjust = 0),

@@ -53,7 +53,7 @@ t_v2 <- avg_table("v2")
 source("md_helper.R")
 ng_mat <- function(t) rbind(t$avg_sa, t$avg_original, t$avg_trend)
 ng_rows <- c("Prom. desest.", "Prom. original", "Tendencia-ciclo")
-src <- "Fuente: INDEC (vía SSPM/datos.gob.ar). IPI base 2004=100."
+src <- "Fuente: INDEC (vía SSPM/datos.gob.ar). IPI base 2004=100. Por Rodrigo Quiroga. Ver github.com/rquiroga7/IPI"
 gov_wide_md("Métrica", ng_rows, ng_mat(t_v1), t_v1$start, t_v1$end, t_v1$n_months,
   "Nivel promedio del IPI por presidencia (V1, años calendario)", src,
   "tabla_promedio_nivel_general.md", append = FALSE)

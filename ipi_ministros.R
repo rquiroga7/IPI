@@ -58,7 +58,7 @@ for (v in c("v1", "v2")) {
     labs(title = paste0("IPI: variación vs. nivel heredado, Fernández por ministro [", v, "]"),
          subtitle = "Guzmán hasta jul-22 y Massa desde jul-22 (incluye interinato Batakis); cada tramo arranca en 0.",
          x = "Meses desde la base del tramo (mes 0)", y = "% de variación vs. base del tramo (desest.)",
-         caption = "Fuente: INDEC (vía SSPM/datos.gob.ar). IPI desestacionalizado, base 2004=100.") +
+          caption = "Fuente: INDEC (vía SSPM/datos.gob.ar). IPI desestacionalizado, base 2004=100. Por Rodrigo Quiroga. Ver github.com/rquiroga7/IPI") +
     white_theme
   fn <- paste0("ipi_variacion_ministros_", v, ".png")
   ggsave(fn, p, width = 11, height = 6, dpi = 300, bg = "white")

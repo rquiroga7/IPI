@@ -22,8 +22,12 @@ library(scales)
 url <- "https://infra.datos.gob.ar/catalog/sspm/dataset/453/distribution/453.1/download/ipi-manufacturero.csv"
 csv_file <- "ipi-manufacturero.csv"
 
-download.file(url, destfile = csv_file, mode = "wb")
-message("Downloaded to: ", normalizePath(csv_file))
+# Data is managed by download_ipi.R (which skips re-download when up to date).
+# Only fetch here if the local file is missing (e.g. fresh clone).
+if (!file.exists(csv_file)) {
+  download.file(url, destfile = csv_file, mode = "wb")
+}
+message("Using: ", normalizePath(csv_file))
 
 df <- read_csv(csv_file, show_col_types = FALSE)
 names(df)
@@ -70,11 +74,11 @@ p1 <- ggplot(df_plot1, aes(x = fecha, y = serie_desestacionalizada,
                      name = "Presidencia", drop = TRUE) +
   scale_x_date(date_breaks = "1 year", date_labels = "%Y", expand = c(0.01, 0.01)) +
   labs(
-    title = "Argentina: Índice de Producción Industrial manufacturero (IPI, INDEC)",
+    title = "Argentina: Índice de Producción Industrial manufacturero (IPI, INDEC) [v1]",
     subtitle = "Serie desestacionalizada, base 2004=100. Ene-2016 hasta el último dato disponible. Tramos desconectados por presidencia.",
     x = NULL,
     y = "Índice (2004=100, desest.)",
-    caption = "Fuente: INDEC (vía SSPM/datos.gob.ar, distr. 453.1)."
+    caption = "Fuente: INDEC (vía SSPM/datos.gob.ar, distr. 453.1). Por Rodrigo Quiroga. Ver github.com/rquiroga7/IPI"
   ) +
   theme_minimal(base_size = 12) +
   theme(legend.position = "bottom", plot.caption = element_text(hjust = 0),
@@ -109,11 +113,11 @@ p2 <- ggplot(df_rebased, aes(x = mes_n, y = var_pct, color = periodo, group = pe
   scale_color_manual(values = period_colors, labels = period_labels,
                      name = "Presidencia", drop = TRUE) +
   labs(
-    title = "IPI manufacturero: variación acumulada vs. el nivel heredado",
+    title = "IPI manufacturero: variación acumulada vs. el nivel heredado [v1]",
     subtitle = "Nivel heredado: dic-19 (Fernández) y dic-23 (Milei).",
     x = "Meses desde el nivel heredado (mes 0)",
     y = "% de variación vs. nivel heredado (desest.)",
-    caption = "Fuente: INDEC (vía SSPM/datos.gob.ar). IPI desestacionalizado, base 2004=100."
+    caption = "Fuente: INDEC (vía SSPM/datos.gob.ar). IPI desestacionalizado, base 2004=100. Por Rodrigo Quiroga. Ver github.com/rquiroga7/IPI"
   ) +
   theme_minimal(base_size = 12) +
   theme(legend.position = "bottom", plot.caption = element_text(hjust = 0),

@@ -128,13 +128,43 @@ cap_sa_nivel <- paste0("Fuente: INDEC 453.1+453.2 vía SSPM. Desest. indirecto: 
   "(químicos: básicos, agroquímicos, farmacia, pinturas, detergentes y otros).\n",
   "Resto = otras 13 divisiones (tabaco, textiles, vestimenta y calzado, madera y papel, caucho y plástico,\n",
   "minerales no metálicos, metálicas básicas, metal, maquinaria, otros equipos, automotores y autopartes, ",
-  "otro transporte, muebles y otras).")
+  "otro transporte, muebles y otras). Por Rodrigo Quiroga. Ver github.com/rquiroga7/IPI")
 cap_sa_var <- paste0("Fuente: INDEC vía SSPM. Desest. indirecto X-13 por división (spec INDEC 2025).\n",
   "Alimentos = div. 15 (carnes, lácteos, molienda, panadería, azúcar, yerba, bebidas, vino y otros). ",
   "Petro+Quím = div. 23 (refinación) + div. 24 (químicos, farmacia, pinturas, detergentes y otros).\n",
   "Resto = otras 13 divisiones (tabaco, textiles, vestimenta y calzado, madera y papel, caucho y plástico,\n",
   "minerales no metálicos, metálicas básicas, metal, maquinaria, otros equipos, automotores, otro transporte, ",
-  "muebles y otras).")
+  "muebles y otras). Por Rodrigo Quiroga. Ver github.com/rquiroga7/IPI")
+cap_sa_var_sec <- paste0("Fuente: INDEC 453.1+453.2 vía SSPM. Desest. indirecto X-13 por división (spec INDEC 2025). Gris = las 16 divisiones\n",
+  "manufactureras (alimentos, tabaco, textiles, vestimenta y calzado, madera y papel, petróleo, químicos, caucho y plástico,\n",
+  "minerales no metálicos, metálicas básicas, metal, maquinaria, otros equipos, automotores y autopartes, otro transporte, muebles\n",
+  "y otras). Etiqueta según último valor: rojo <-5%, negro ±5%, verde >5%. Color intenso = nivel general indirecto (promedio\n",
+  "ponderado de las 16 divisiones SA, ponderadores INDEC 2004). Por Rodrigo Quiroga. Ver github.com/rquiroga7/IPI")
+
+# Nivel para la variante por sector: 16 divisiones SA + nivel general indirecto.
+SA_sec <- tibble(fecha = fechas) %>% dplyr::bind_cols(SA) %>%
+  mutate(NG_indirecto = ng_ind)
+sec_cols <- spec$col
+
+# Nombres de una palabra para las etiquetas de fin de línea (variante por sector).
+sec_short <- c(
+  alimentos_bebidas = "Alimentos",
+  productos_tabaco = "Tabaco",
+  productos_textiles = "Textiles",
+  prendas_vestir_cuero_calzado = "Vestimenta",
+  madera_papel_edicion_impresion = "Madera",
+  refinacion_petroleo_coque_combustible_nuclear = "Petróleo",
+  sustancias_productos_quimicos = "Químicos",
+  productos_caucho_plastico = "Caucho",
+  productos_minerales_no_metalicos = "Minerales",
+  industrias_metalicas_basicas = "Metálicas",
+  productos_metal = "Metal",
+  maquinaria_equipo = "Maquinaria",
+  otros_equipos_aparatos_instrumentos = "Equipos",
+  vehiculos_automotores_carrocerias_remolques_autopartes = "Automotores",
+  otro_equipo_de_transporte = "Transporte",
+  muebles_colchones_otras_industrias_manufactureras = "Muebles"
+)
 
 tabs <- list(); punts <- list()
 for (v in c("v1", "v2")) {
@@ -183,6 +213,74 @@ for (v in c("v1", "v2")) {
   ggsave(fn2, p2, width = 12, height = 7, dpi = 300, bg = "white")
   message("Guardado ", fn2)
 
+  # Variante: 16 divisiones en gris + nivel general en color, una faceta por período.
+  sec_long <- SA_sec %>%
+    tidyr::pivot_longer(c(dplyr::all_of(sec_cols), NG_indirecto),
+                        names_to = "serie", values_to = "indice_sa") %>%
+    mutate(es_ng = serie == "NG_indirecto")
+  dreb_sec <- bind_rows(lapply(names(wins), function(p)
+    sec_long %>% filter(fecha >= wins[[p]][1], fecha <= wins[[p]][2]) %>%
+      arrange(serie, fecha) %>% mutate(periodo = p))) %>%
+    mutate(periodo = factor(periodo, levels = names(period_colors))) %>%
+    group_by(periodo, serie) %>% arrange(fecha) %>%
+    mutate(mes_n = row_number() - 1L, base = first(indice_sa),
+           var_pct = 100 * (indice_sa / base - 1)) %>% ungroup()
+  dreb_gray <- dreb_sec %>% filter(!es_ng)
+  dreb_ng <- dreb_sec %>% filter(es_ng)
+  # Etiquetas al final de cada línea gris: nombre corto + último valor (entero, con signo),
+  # coloreadas por valor: rojo <-5%, negro ±5%, verde >+5%.
+  val_col <- c(neg = "#641E16", mid = "black", pos = "#145A32")
+  lab_gray <- dreb_gray %>% group_by(periodo, serie) %>% arrange(mes_n) %>%
+    summarise(x_end = max(mes_n), y_end = dplyr::last(var_pct), .groups = "drop") %>%
+    mutate(bucket = dplyr::case_when(y_end < -5 ~ "neg", y_end > 5 ~ "pos", TRUE ~ "mid"),
+           etiqueta = paste(sec_short[serie],
+                            sprintf("%+d%%", as.integer(round(y_end)))))
+  lab_ng <- dreb_ng %>% group_by(periodo) %>% arrange(mes_n) %>%
+    summarise(x_end = max(mes_n), y_end = dplyr::last(var_pct), .groups = "drop") %>%
+    mutate(serie = "NG_indirecto",
+           etiqueta = sprintf("General %+d%%", as.integer(round(y_end))))
+  # Una sola capa de etiquetas para que ggrepel evite solapes.
+  # Sectores: color según último valor. General: color de su presidencia.
+  lab_all <- dplyr::bind_rows(
+    lab_gray %>% mutate(lab_col = bucket, fface = "plain"),
+    lab_ng %>% mutate(lab_col = as.character(periodo), fface = "bold")
+  )
+  # Títulos de faceta con el mes base (iguales en v1 y v2).
+  facet_labs <- c(macri = "M. Macri (base = ene-2016)",
+                  alberto = "A. Fernández (base = nov-2019)",
+                  milei = "J. Milei (base = nov-2023)")
+  p3 <- ggplot() +
+    geom_hline(yintercept = 0, linetype = "dashed", color = "grey40") +
+    geom_line(data = dreb_gray, aes(mes_n, var_pct, group = serie),
+              color = "grey50", linewidth = 0.5, alpha = 0.9) +
+    geom_line(data = dreb_ng, aes(mes_n, var_pct, color = periodo, group = periodo),
+              linewidth = 1.1) +
+    # Marco del color de cada presidencia alrededor de su faceta.
+    geom_rect(data = data.frame(periodo = factor(names(period_colors), levels = names(period_colors))),
+              aes(xmin = -Inf, xmax = Inf, ymin = -Inf, ymax = Inf, color = periodo),
+              fill = NA, linewidth = 1.2, show.legend = FALSE) +
+    ggrepel::geom_label_repel(data = lab_all, aes(x_end, y_end, label = etiqueta, color = lab_col, fontface = fface),
+              size = 3, hjust = 0, direction = "y", fill = "white",
+              label.padding = 0.2, label.r = 0.2, label.size = 0.4,
+              nudge_x = 1.2, segment.size = 0,
+              box.padding = 0.3, point.padding = 0.2, force = 2,
+              max.overlaps = Inf, seed = 123, show.legend = FALSE) +
+    facet_wrap(~periodo, ncol = 1, labeller = ggplot2::as_labeller(facet_labs)) +
+    scale_color_manual(values = c(period_colors, val_col),
+                       labels = labs, breaks = names(period_colors),
+                       name = "Nivel general", drop = TRUE) +
+    scale_x_continuous(expand = expansion(mult = c(0.02, 0.30))) +
+    scale_y_continuous(limits = c(-50, 75), oob = scales::oob_squish) +
+    coord_cartesian(clip = "off") +
+    labs(title = "IPI por sector: % acumulado vs. nivel heredado",
+         x = "Meses desde el nivel heredado (mes 0)", y = "% vs. nivel heredado (desest.)",
+         caption = cap_sa_var_sec) +
+    white_theme +
+    theme(plot.margin = margin(5.5, 30, 5.5, 5.5), legend.position = "none")
+  fn3 <- paste0("ipi_grupos_sa_variacion_sectores_", v, ".png")
+  ggsave(fn3, p3, width = 9, height = 12, dpi = 300, bg = "white")
+  message("Guardado ", fn3)
+
   tab <- dlev %>% group_by(periodo, grupo) %>%
     summarise(n = n(), start = min(fecha), end = max(fecha), avg_sa = mean(indice_sa, na.rm = TRUE), .groups = "drop") %>%
     arrange(grupo, start)
@@ -202,7 +300,7 @@ wide_gr <- function(tab, valcol) {
   idx <- match(govs, tab$periodo)
   list(mat = mat, starts = tab$start[idx], ends = tab$end[idx], ns = tab$n[idx])
 }
-srcsa <- "Fuente: INDEC 453.1+453.2 vía SSPM. Desest. indirecto X-13 por división (spec INDEC 2025). Base 2004=100."
+srcsa <- "Fuente: INDEC 453.1+453.2 vía SSPM. Desest. indirecto X-13 por división (spec INDEC 2025). Base 2004=100. Por Rodrigo Quiroga. Ver github.com/rquiroga7/IPI"
 w1 <- wide_gr(tabs$v1, "avg_sa"); w2 <- wide_gr(tabs$v2, "avg_sa")
 gov_wide_md("Grupo", grs, w1$mat, w1$starts, w1$ends, w1$ns,
   "Nivel promedio por gobierno y grupo, desestacionalizado (V1)", srcsa,
@@ -219,7 +317,7 @@ wide_punta <- function(tab) {
     tab$Base[idx], tab$Cierre[idx])
   list(mat = mat, starts = tab$Base[idx], ends = tab$Cierre[idx], ns = n_int)
 }
-srcp <- "Fuente: INDEC vía SSPM, desest. INDEC. Variación punta a punta vs. último mes de la presidencia anterior (nivel heredado)."
+srcp <- "Fuente: INDEC vía SSPM, desest. INDEC. Variación punta a punta vs. último mes de la presidencia anterior (nivel heredado). Por Rodrigo Quiroga. Ver github.com/rquiroga7/IPI"
 p1 <- wide_punta(punts$v1); p2 <- wide_punta(punts$v2)
 gov_wide_md("Grupo", grs, p1$mat, p1$starts, p1$ends, p1$ns,
   "Diferencia punta a punta por gobierno y grupo (V1, % vs. nivel heredado)", srcp,

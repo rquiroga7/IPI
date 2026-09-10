@@ -83,13 +83,13 @@ cap_nivel <- paste0("Fuente: INDEC 453.1 + 453.2 vía SSPM.\n",
   "(químicos: básicos, agroquímicos, farmacia, pinturas, detergentes y otros).\n",
   "Resto = otras 13 divisiones (tabaco, textiles, vestimenta y calzado, madera y papel, caucho y plástico,\n",
   "minerales no metálicos, metálicas básicas, metal, maquinaria, otros equipos, automotores y autopartes, ",
-  "otro transporte, muebles y otras).")
+  "otro transporte, muebles y otras). Por Rodrigo Quiroga. Ver github.com/rquiroga7/IPI")
 cap_var <- paste0("Fuente: INDEC vía SSPM. Índices originales (estacionales); el rebaseo no elimina la estacionalidad.\n",
   "Alimentos = div. 15 (carnes, lácteos, molienda, panadería, azúcar, yerba, bebidas, vino y otros). ",
   "Petro+Quím = div. 23 (refinación) + div. 24 (químicos, farmacia, pinturas, detergentes y otros).\n",
   "Resto = otras 13 divisiones (tabaco, textiles, vestimenta y calzado, madera y papel, caucho y plástico,\n",
   "minerales no metálicos, metálicas básicas, metal, maquinaria, otros equipos, automotores, otro transporte, ",
-  "muebles y otras).")
+  "muebles y otras). Por Rodrigo Quiroga. Ver github.com/rquiroga7/IPI")
 
 tabs <- list()
 for (v in c("v1", "v2")) {
@@ -154,7 +154,7 @@ mkd_wide <- function(tab) {
 }
 w1 <- mkd_wide(tabs$v1); w2 <- mkd_wide(tabs$v2)
 grs <- c("Alimentos y bebidas", "Petróleo + Químicos", "Resto")
-srcg <- "Fuente: INDEC 453.1+453.2 vía SSPM. Serie original, base 2004=100."
+srcg <- "Fuente: INDEC 453.1+453.2 vía SSPM. Serie original, base 2004=100. Por Rodrigo Quiroga. Ver github.com/rquiroga7/IPI"
 gov_wide_md("Grupo", grs, w1$mat, w1$starts, w1$ends, w1$ns,
   "Nivel promedio por gobierno y grupo, serie original (V1)", srcg,
   "tabla_promedio_grupos.md", append = FALSE)
